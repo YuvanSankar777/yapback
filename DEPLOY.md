@@ -72,6 +72,40 @@ Point your domain at the VM (optionally add Caddy/Nginx for HTTPS).
 
 ---
 
+## Ingesting YouTube videos from a cloud host (proxy required)
+
+YouTube **blocks requests from datacenter IPs** (Hugging Face, AWS, most VMs). So on a
+deployed Space, transcript fetching fails with an SSL/`UNEXPECTED_EOF` error — even though
+Endee, Streamlit, and Gemini all work fine. It works on your laptop only because a home
+(residential) IP isn't blocked.
+
+To let the deployed app ingest videos, route YouTube traffic through a **residential
+proxy**. YapBack reads these secrets (set one):
+
+| Secret | Use |
+|--------|-----|
+| `WEBSHARE_PROXY_USERNAME` + `WEBSHARE_PROXY_PASSWORD` | [Webshare](https://www.webshare.io) **Residential** proxy account |
+| `PROXY_URL` | Any generic proxy, e.g. `http://user:pass@host:port` |
+
+**Webshare setup (most common):**
+1. Sign up at [webshare.io](https://www.webshare.io) and buy a **Residential** plan
+   (their *free* tier is **datacenter** proxies, which YouTube also blocks — you need
+   **residential**).
+2. Dashboard → **Proxy → Residential** → copy your **proxy username** and **password**.
+3. In the HF Space → **Settings → Variables and secrets**, add both as secrets:
+   `WEBSHARE_PROXY_USERNAME`, `WEBSHARE_PROXY_PASSWORD`.
+4. **Factory reboot** the Space. Ingestion now works for any YouTube URL.
+
+**Free alternative — self-host a proxy on your home network:** run a proxy on your own
+machine (e.g. [`pproxy`](https://pypi.org/project/pproxy/) or Squid), expose it with a
+tunnel (`cloudflared`/`ngrok`), and set `PROXY_URL` to it. This routes through your
+residential IP for free, but requires your machine to be online whenever the Space is used.
+
+Without any proxy set, the app shows a clear message explaining the block instead of a raw
+SSL error.
+
+---
+
 ## Requirements & gotchas
 
 - **CPU:** the Endee server needs **AVX2** (x86_64) or **NEON/SVE2** (ARM). All mainstream

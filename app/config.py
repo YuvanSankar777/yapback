@@ -17,4 +17,11 @@ EMBED_DIM      = 3072
 CHUNK_SIZE     = 150
 OVERLAP        = 5
 
+# Optional proxy for reaching YouTube. Cloud hosts (Hugging Face, most VMs) have
+# their datacenter IP blocked by YouTube, so a residential proxy is needed there.
+# Set EITHER a Webshare residential account OR a generic proxy URL.
+WEBSHARE_PROXY_USERNAME = os.getenv("WEBSHARE_PROXY_USERNAME", "")
+WEBSHARE_PROXY_PASSWORD = os.getenv("WEBSHARE_PROXY_PASSWORD", "")
+PROXY_URL               = os.getenv("PROXY_URL", "")  # e.g. http://user:pass@host:port
+
 gemini = genai.Client(api_key=GEMINI_API_KEY)

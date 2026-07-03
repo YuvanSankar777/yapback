@@ -1,11 +1,31 @@
 import re
 import requests
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import WebshareProxyConfig, GenericProxyConfig
 from endee import Endee
 
-from app.config import COLLECTION, EMBED_DIM, CHUNK_SIZE, OVERLAP, ENDEE_API_URL, HEALTH_URL
+from app.config import (
+    COLLECTION, EMBED_DIM, CHUNK_SIZE, OVERLAP, ENDEE_API_URL, HEALTH_URL,
+    WEBSHARE_PROXY_USERNAME, WEBSHARE_PROXY_PASSWORD, PROXY_URL,
+)
 from app.embed import embed
 from app.classifier import classify_video
+
+
+def _proxy_config():
+    """Return a youtube-transcript-api proxy config, or None if unconfigured.
+
+    Cloud hosts (Hugging Face, most VMs) have their datacenter IP blocked by
+    YouTube, so a residential proxy is required to fetch transcripts there.
+    """
+    if WEBSHARE_PROXY_USERNAME and WEBSHARE_PROXY_PASSWORD:
+        return WebshareProxyConfig(
+            proxy_username=WEBSHARE_PROXY_USERNAME,
+            proxy_password=WEBSHARE_PROXY_PASSWORD,
+        )
+    if PROXY_URL:
+        return GenericProxyConfig(http_url=PROXY_URL, https_url=PROXY_URL)
+    return None
 
 
 def extract_video_id(url_or_id):
@@ -24,11 +44,14 @@ def seconds_to_label(seconds):
 
 
 def fetch_title(video_id):
+    cfg = _proxy_config()
+    proxies = cfg.to_requests_dict() if cfg is not None else None
     try:
         resp = requests.get(
             "https://www.youtube.com/oembed",
             params={"url": f"https://youtube.com/watch?v={video_id}", "format": "json"},
-            timeout=5,
+            timeout=8,
+            proxies=proxies,
         )
         if resp.ok:
             return resp.json()["title"]
@@ -57,8 +80,19 @@ def _ensure_collection(client):
 
 
 def fetch_transcript(video_id):
-    api = YouTubeTranscriptApi()
-    transcript = api.fetch(video_id, languages=["en"])
+    api = YouTubeTranscriptApi(proxy_config=_proxy_config())
+    try:
+        transcript = api.fetch(video_id, languages=["en"])
+    except Exception as e:
+        if _proxy_config() is None:
+            raise RuntimeError(
+                "Couldn't reach YouTube. If YapBack is running on a cloud host "
+                "(e.g. Hugging Face), YouTube blocks its server IP — configure a "
+                "residential proxy via the WEBSHARE_PROXY_USERNAME/"
+                "WEBSHARE_PROXY_PASSWORD or PROXY_URL secret. "
+                f"(underlying error: {type(e).__name__}: {e})"
+            ) from e
+        raise
     return transcript.to_raw_data()
 
 
