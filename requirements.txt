@@ -1,0 +1,6 @@
+endee==0.1.25
+youtube-transcript-api>=0.6
+google-genai>=1.0
+streamlit>=1.35
+python-dotenv>=1.0
+scikit-learn>=1.4

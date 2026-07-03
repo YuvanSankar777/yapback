@@ -1,0 +1,29 @@
+# Environment / secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ML model cache (rebuilt from training data on first run)
+*.pkl
+
+# Endee data volume
+endee_data/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Editor / OS
+.vscode/
+.idea/
+.claude/
+.DS_Store

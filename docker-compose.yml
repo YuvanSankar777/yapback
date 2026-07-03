@@ -1,0 +1,11 @@
+services:
+  endee:
+    image: endeeio/endee-server:latest
+    container_name: endee_server
+    ports:
+      - "8080:8080"
+    volumes:
+      - endee_data:/data
+    restart: unless-stopped
+volumes:
+  endee_data:
