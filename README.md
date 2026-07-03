@@ -7,7 +7,7 @@ sdk: docker
 app_port: 7860
 pinned: false
 license: mit
-short_description: Ask any YouTube video a question — RAG with timestamp citations
+short_description: YouTube video Q&A with RAG + timestamp citations
 ---
 
 <h1 align="center">🎙️ YapBack</h1>
