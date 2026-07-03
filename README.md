@@ -1,3 +1,15 @@
+---
+title: YapBack
+emoji: 🎙️
+colorFrom: purple
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+short_description: Ask any YouTube video a question — RAG with timestamp citations
+---
+
 <h1 align="center">🎙️ YapBack</h1>
 
 <p align="center">
@@ -104,6 +116,32 @@ Then open **http://localhost:8501** and paste any YouTube URL to get started. �
 
 **In the app:** paste a YouTube URL in the sidebar → **Ingest Video** → ask questions in the chat.
 Use the **Search Within** dropdown to scope answers to a single video or search across all of them.
+
+---
+
+## ☁️ Deploy (free)
+
+YapBack ships as a **single Docker image** that runs *both* the Endee vector DB and the
+Streamlit UI (see [`Dockerfile`](./Dockerfile) + [`start.sh`](./start.sh)), so it deploys
+anywhere Docker runs. The easiest free host is **Hugging Face Spaces**:
+
+1. Create a free account at [huggingface.co](https://huggingface.co), then **New Space** →
+   **SDK: Docker** → name it `yapback`.
+2. In the Space, **Settings → Variables and secrets → New secret**:
+   `GEMINI_API_KEY = <your key>`.
+3. Push this repo to the Space's git remote:
+   ```bash
+   git remote add hf https://huggingface.co/spaces/<your-username>/yapback
+   git push hf main
+   ```
+   The YAML header in this README (`sdk: docker`, `app_port: 7860`) tells the Space to build
+   the `Dockerfile`. First build takes ~5 min; the app then goes live at
+   `https://<your-username>-yapback.hf.space`.
+
+Full instructions and other hosts (Render, any VM) are in **[DEPLOY.md](./DEPLOY.md)**.
+
+> ℹ️ On free tiers the Endee data volume is **ephemeral** — ingested videos reset when the
+> Space sleeps or rebuilds. Just re-ingest; it takes seconds.
 
 ---
 
