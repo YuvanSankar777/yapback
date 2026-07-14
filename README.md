@@ -26,13 +26,34 @@ short_description: YouTube video Q&A with RAG + timestamp citations
 </p>
 
 <p align="center">
+  <a href="#-live-demo">Live Demo</a> ·
   <a href="#-how-it-works">How It Works</a> ·
   <a href="#-features">Features</a> ·
-  <a href="#-getting-started">Getting Started</a> ·
+  <a href="#run-locally">Run Locally</a> ·
   <a href="#-usage">Usage</a> ·
   <a href="#-evaluation">Evaluation</a> ·
   <a href="#-tech-stack">Tech Stack</a>
 </p>
+
+---
+
+## 🌐 Live Demo
+
+**▶️ [Try it on Hugging Face Spaces](https://Yuvan777-yapback.hf.space)**
+
+The hosted demo comes **pre-loaded with two videos** you can ask questions about right now:
+
+| Video | Topic | Try asking |
+|:------|:------|:-----------|
+| 🎬 *Python in 100 Seconds* — Fireship | Tech | *"Who created Python and when?"* |
+| 🎬 *Speak English in 30 Minutes: Advanced English Lesson* | Education | *"What speaking mistakes are covered?"* |
+
+Every answer comes back with clickable **timestamp citations** that jump to the exact moment in the video.
+
+> ⚠️ **Why can't I add my own video on the live demo?**
+> YouTube blocks transcript requests coming from **cloud-server IPs** (Hugging Face, AWS, Google Cloud, etc.) as an anti-bot measure. Because the demo runs on Hugging Face's servers, it can't fetch new transcripts — so ingestion is **disabled on the hosted demo** and limited to the pre-loaded videos.
+>
+> ✅ **Ingesting *any* YouTube video works when you [run YapBack locally](#run-locally)** — requests then come from your own machine's residential IP, which YouTube allows. For an always-on public instance that ingests any video, see the residential-proxy setup in **[DEPLOY.md](./DEPLOY.md)**.
 
 ---
 
@@ -76,7 +97,13 @@ video's real transcript — never hallucinated — and cites the exact timestamp
 
 ---
 
-## 🚀 Getting Started
+<a id="run-locally"></a>
+
+## 🚀 Run Locally — Ingest Any Video
+
+Running locally is the **full experience**: paste any YouTube URL and ingest it, because
+transcript requests come from your own residential IP (which YouTube allows) rather than a
+blocked cloud IP.
 
 **Prerequisites:** Python 3.10+, Docker Desktop, and a free [Gemini API key](https://aistudio.google.com/apikey).
 
@@ -95,8 +122,8 @@ pip install -r requirements.txt
 cp .env.example .env
 #   → open .env and set GEMINI_API_KEY
 
-# 5. (Optional) Seed a demo video
-python demo_seed.py
+# 5. (Optional) Seed the pre-built demo videos (no YouTube call)
+python seed_demo.py
 
 # 6. Launch the app
 streamlit run streamlit_app.py
@@ -111,7 +138,7 @@ Then open **http://localhost:8501** and paste any YouTube URL to get started. �
 | Command | What it does |
 |:--------|:-------------|
 | `streamlit run streamlit_app.py` | Launch the chat UI at `localhost:8501` |
-| `python demo_seed.py` | Ingest a demo video (Fireship's *Python in 100 Seconds*) |
+| `python seed_demo.py` | Load the pre-built demo videos into Endee (no YouTube call) |
 | `python evaluate.py` | Run the retrieval benchmark (10 queries, Hit@K + recall) |
 
 **In the app:** paste a YouTube URL in the sidebar → **Ingest Video** → ask questions in the chat.
@@ -138,10 +165,17 @@ anywhere Docker runs. The easiest free host is **Hugging Face Spaces**:
    the `Dockerfile`. First build takes ~5 min; the app then goes live at
    `https://<your-username>-yapback.hf.space`.
 
-Full instructions and other hosts (Render, any VM) are in **[DEPLOY.md](./DEPLOY.md)**.
+On startup the container **auto-seeds the pre-built demo videos** (`demo_data/`) so the Space
+has content immediately, and runs in **demo mode** (`YAPBACK_DEMO=1`) — ingestion is disabled
+because YouTube blocks the cloud IP (see [Live Demo](#-live-demo)). Visitors can query the
+pre-loaded videos; adding new videos is done by [running locally](#run-locally).
 
-> ℹ️ On free tiers the Endee data volume is **ephemeral** — ingested videos reset when the
-> Space sleeps or rebuilds. Just re-ingest; it takes seconds.
+**Want the hosted instance to ingest *any* video?** Configure a **residential proxy** — full
+instructions (Webshare / generic `PROXY_URL`) are in **[DEPLOY.md](./DEPLOY.md)**, along with
+other hosts (Render, any VM).
+
+> ℹ️ On free tiers the Endee data volume is **ephemeral** — the demo videos are re-seeded on
+> every restart, so the demo always works.
 
 ---
 

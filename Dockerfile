@@ -23,7 +23,8 @@ ENV NDD_DATA_DIR=/data \
     NDD_SERVER_PORT=8080 \
     NDD_NUM_THREADS=0 \
     ENDEE_URL=http://localhost:8080 \
-    PORT=7860
+    PORT=7860 \
+    YAPBACK_DEMO=1
 
 EXPOSE 7860
 

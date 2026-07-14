@@ -1,8 +1,17 @@
+import json
+import os
+
 import streamlit as st
 from app.ingest import ingest_video
 from app.search import answer
 
 st.set_page_config(page_title="YapBack", page_icon="🎙️", layout="wide")
+
+# On the hosted demo (Hugging Face), YouTube blocks the server's cloud IP, so new
+# videos can't be ingested there. In that mode we pre-load a few demo videos to
+# ask questions about and disable ingestion. Full ingestion works when run locally.
+DEMO_MODE = os.getenv("YAPBACK_DEMO") == "1"
+GITHUB_URL = "https://github.com/YuvanSankar777/yapback"
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -10,6 +19,18 @@ if "videos" not in st.session_state:
     st.session_state.videos = {}
 if "video_topics" not in st.session_state:
     st.session_state.video_topics = {}
+
+if DEMO_MODE and not st.session_state.get("_demo_loaded"):
+    manifest_path = os.path.join(os.path.dirname(__file__), "demo_data", "manifest.json")
+    if os.path.exists(manifest_path):
+        with open(manifest_path) as f:
+            for v in json.load(f):
+                st.session_state.videos[v["video_id"]] = v["title"]
+                st.session_state.video_topics[v["video_id"]] = {
+                    "topic": v.get("topic", "General"),
+                    "distribution": v.get("distribution", {}),
+                }
+    st.session_state._demo_loaded = True
 
 
 def ask_question(question):
@@ -35,33 +56,43 @@ with st.sidebar:
     st.caption("Ask anything about any YouTube video")
     st.divider()
 
-    st.subheader("Add a Video")
-    url_input = st.text_input("YouTube URL", placeholder="https://youtube.com/watch?v=...")
-    title_input = st.text_input("Video title (optional)", placeholder="e.g. Karpathy LLM Talk")
+    if DEMO_MODE:
+        st.info(
+            "🔒 **Hosted demo — ingestion disabled.**\n\n"
+            "YouTube blocks transcript requests from cloud-server IPs (Hugging Face, "
+            "AWS, etc.), so new videos can't be added here. Ask questions about the "
+            "**pre-loaded videos** below 👇\n\n"
+            f"To ingest *any* video, [run YapBack locally]({GITHUB_URL}#run-locally) — "
+            "it works from your own machine's IP."
+        )
+    else:
+        st.subheader("Add a Video")
+        url_input = st.text_input("YouTube URL", placeholder="https://youtube.com/watch?v=...")
+        title_input = st.text_input("Video title (optional)", placeholder="e.g. Karpathy LLM Talk")
 
-    if st.button("Ingest Video", type="primary", use_container_width=True):
-        if not url_input.strip():
-            st.warning("Please paste a YouTube URL.")
-        else:
-            with st.spinner("Fetching transcript & embedding into Endee..."):
-                try:
-                    result = ingest_video(url_input.strip(), title_input.strip())
-                    st.session_state.videos[result["video_id"]] = result["video_title"]
-                    st.session_state.selected_video = result["video_title"]
-                    st.session_state.chat_history = []
-                    topic = result.get("dominant_topic", "General")
-                    dist = result.get("topic_distribution", {})
-                    st.session_state.video_topics[result["video_id"]] = {"topic": topic, "distribution": dist}
-                    st.success(
-                        f"Indexed **{result['chunk_count']} chunks** from "
-                        f"*{result['video_title']}*"
-                    )
-                    st.info(f"🏷️ Topic: **{topic}**")
-                    if dist:
-                        st.caption(f"Distribution: {dist}")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Failed: {e}")
+        if st.button("Ingest Video", type="primary", use_container_width=True):
+            if not url_input.strip():
+                st.warning("Please paste a YouTube URL.")
+            else:
+                with st.spinner("Fetching transcript & embedding into Endee..."):
+                    try:
+                        result = ingest_video(url_input.strip(), title_input.strip())
+                        st.session_state.videos[result["video_id"]] = result["video_title"]
+                        st.session_state.selected_video = result["video_title"]
+                        st.session_state.chat_history = []
+                        topic = result.get("dominant_topic", "General")
+                        dist = result.get("topic_distribution", {})
+                        st.session_state.video_topics[result["video_id"]] = {"topic": topic, "distribution": dist}
+                        st.success(
+                            f"Indexed **{result['chunk_count']} chunks** from "
+                            f"*{result['video_title']}*"
+                        )
+                        st.info(f"🏷️ Topic: **{topic}**")
+                        if dist:
+                            st.caption(f"Distribution: {dist}")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed: {e}")
 
     st.divider()
 

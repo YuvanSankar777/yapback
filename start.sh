@@ -23,6 +23,11 @@ for _ in $(seq 1 90); do
   sleep 1
 done
 
+if [ "${YAPBACK_DEMO:-0}" = "1" ]; then
+  echo "==> Seeding demo videos into Endee..."
+  python3 seed_demo.py || echo "==> Demo seed skipped."
+fi
+
 echo "==> Starting Streamlit on port ${PORT}..."
 exec streamlit run streamlit_app.py \
   --server.port="${PORT}" \
